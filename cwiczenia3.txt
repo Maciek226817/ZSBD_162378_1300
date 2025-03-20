@@ -1,0 +1,132 @@
+WIDOKI
+
+ZADANIE1
+
+CREATE VIEW v_wysokie_pensje AS
+SELECT EMPLOYEE_ID, FIRST_NAME, LAST_NAME
+FROM employees
+WHERE salary > 6000;
+
+ZADANIE2
+
+CREATE OR REPLACE VIEW v_wysokie_pensje AS
+SELECT EMPLOYEE_ID, FIRST_NAME, LAST_NAME
+FROM employees
+WHERE salary > 12000;
+
+ZADANIE3
+
+DROP VIEW v_wysokie_pensje;
+
+ZADANIE4
+
+CREATE VIEW finance_employees AS
+SELECT 
+    e.employee_id,
+    e.last_name,
+    e.first_name
+FROM 
+    employees e
+JOIN 
+    departments d ON e.department_id = d.department_id
+WHERE 
+    d.department_name = 'Finance';
+
+ZADANIE5
+
+CREATE OR REPLACE VIEW v_pracownicy_zarobki AS
+SELECT 
+    employee_id,
+    last_name,
+    first_name,
+    salary,
+    job_id,
+    email,
+    hire_date
+FROM 
+    employees
+WHERE 
+    salary BETWEEN 5000 AND 12000;
+
+ZADANIE6
+
+A)dodanie nowego pracownika przez ten widok będzie możliwe tylko wtedy, 
+gdy nowy pracownik będzie miał pensję w tym przedziale.
+
+B)Można edytować pracowników, ale tylko w zakresie kolumn, które są dostępne w widoku
+
+C)Usunięcie pracownika przez widok będzie możliwe, jeśli widok odnosi się do jednej tabeli 
+i nie zawiera funkcji agregujących ani złożonych operacji
+
+ZADANIE7
+
+CREATE OR REPLACE VIEW v_dzialy_statystyki AS
+SELECT 
+    d.department_id,
+    d.department_name,
+    COUNT(e.employee_id) AS liczba_pracownikow,
+    AVG(e.salary) AS srednia_pensja,
+    MAX(e.salary) AS najwyzsza_pensja
+FROM 
+    departments d
+JOIN 
+    employees e ON d.department_id = e.department_id
+GROUP BY 
+    d.department_id, d.department_name
+HAVING 
+    COUNT(e.employee_id) >= 4;
+
+Nie można dodać danych, przez funkcje agregujące itp.
+
+ZADANIE8
+
+CREATE OR REPLACE VIEW v_pracownicy_zarobki AS
+SELECT 
+    employee_id,
+    last_name,
+    first_name,
+    salary,
+    job_id,
+    email,
+    hire_date
+FROM 
+    employees
+WHERE 
+    salary BETWEEN 5000 AND 12000
+WITH CHECK OPTION;
+
+Dodanie pracownika z zarobkami pomiędzy 5000 a 12000, operacja uda się
+ponieważ spełnia warunki widoku.
+
+Dodanie pracownika powyzej 12000, operacja zostanie odrzucona, ponieważ nie spełnia warunku.
+
+ZADANIE9
+
+CREATE MATERIALIZED VIEW v_managerowie AS
+SELECT 
+    e.employee_id,
+    e.first_name,
+    e.last_name,
+    d.department_name
+FROM 
+    employees e
+JOIN 
+    departments d ON e.department_id = d.department_id
+WHERE 
+    e.job_id IN ('FI_MGR', 'AC_MGR', 'ST_MAN', 'MK_MAN', 'PU_MAN');
+
+ZADANIE10
+
+CREATE OR REPLACE VIEW v_najlepiej_oplacani AS
+SELECT 
+    e.employee_id,
+    e.first_name,
+    e.last_name,
+    e.salary,
+    e.job_id,
+    e.department_id
+FROM 
+    employees e
+ORDER BY 
+    e.salary DESC
+FETCH FIRST 10 ROWS ONLY;

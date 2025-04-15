@@ -1,0 +1,341 @@
+ZADANIE1
+
+DECLARE
+    p_job_id    JOBS.JOB_ID%TYPE := 'DEV_MGR'; 
+    p_job_title JOBS.JOB_TITLE%TYPE := 'Development Manager'; 
+BEGIN
+    INSERT INTO JOBS (JOB_ID, JOB_TITLE, MIN_SALARY, MAX_SALARY)
+    VALUES (p_job_id, p_job_title, NULL, NULL);
+
+
+    DBMS_OUTPUT.PUT_LINE('Rekord został dodany: ' || p_job_id || ', ' || p_job_title);
+
+EXCEPTION
+    WHEN DUP_VAL_ON_INDEX THEN
+        DBMS_OUTPUT.PUT_LINE('Błąd: Job_id już istnieje.');
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Wystąpił nieoczekiwany błąd: ' || SQLERRM);
+END;
+/
+
+
+ZADANIE2
+
+DECLARE
+    p_job_id    JOBS.JOB_ID%TYPE := 'DEV_MGR';
+    p_new_title JOBS.JOB_TITLE%TYPE := 'Updated Title';
+    v_rows_updated NUMBER;
+    ex_no_jobs_updated EXCEPTION;
+    PRAGMA EXCEPTION_INIT(ex_no_jobs_updated, -20001);
+BEGIN
+    UPDATE JOBS
+    SET JOB_TITLE = p_new_title
+    WHERE JOB_ID = p_job_id;
+
+    v_rows_updated := SQL%ROWCOUNT;
+
+    IF v_rows_updated = 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'No jobs updated for Job_id: ' || p_job_id);
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Zaktualizowano ' || v_rows_updated || ' wiersz(y) dla Job_id: ' || p_job_id);
+    END IF;
+
+EXCEPTION
+    WHEN ex_no_jobs_updated THEN
+        DBMS_OUTPUT.PUT_LINE('Błąd: Nie zaktualizowano żadnego wiersza. Sprawdź Job_id.');
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Wystąpił nieoczekiwany błąd: ' || SQLERRM);
+END;
+/
+
+ZADANIE3
+
+CREATE OR REPLACE PROCEDURE DeleteJob(p_job_id IN JOBS.JOB_ID%TYPE) AS
+    v_rows_deleted NUMBER;
+    ex_no_jobs_deleted EXCEPTION;
+    PRAGMA EXCEPTION_INIT(ex_no_jobs_deleted, -20002);
+BEGIN
+    DELETE FROM JOBS
+    WHERE JOB_ID = p_job_id;
+
+    v_rows_deleted := SQL%ROWCOUNT;
+
+    IF v_rows_deleted = 0 THEN
+        RAISE_APPLICATION_ERROR(-20002, 'No jobs deleted for Job_id: ' || p_job_id);
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Usunięto ' || v_rows_deleted || ' wiersz(y) dla Job_id: ' || p_job_id);
+    END IF;
+
+EXCEPTION
+    WHEN ex_no_jobs_deleted THEN
+        DBMS_OUTPUT.PUT_LINE('Błąd: Nie usunięto żadnego wiersza. Sprawdź Job_id.');
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Wystąpił nieoczekiwany błąd: ' || SQLERRM);
+END;
+/
+
+
+BEGIN
+    DeleteJob('DEV_MGR');
+END;
+/
+
+ZADANIE4
+
+CREATE OR REPLACE PROCEDURE GetEmployeeDetails(
+    p_employee_id IN EMPLOYEES.EMPLOYEE_ID%TYPE,
+    p_last_name OUT EMPLOYEES.LAST_NAME%TYPE,
+    p_salary OUT EMPLOYEES.SALARY%TYPE
+) AS
+BEGIN
+    SELECT LAST_NAME, SALARY
+    INTO p_last_name, p_salary
+    FROM EMPLOYEES
+    WHERE EMPLOYEE_ID = p_employee_id;
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        p_last_name := NULL;
+        p_salary := NULL;
+        DBMS_OUTPUT.PUT_LINE('Nie znaleziono pracownika o ID: ' || p_employee_id);
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Wystąpił błąd: ' || SQLERRM);
+END;
+/
+
+DECLARE
+    v_last_name EMPLOYEES.LAST_NAME%TYPE;
+    v_salary EMPLOYEES.SALARY%TYPE;
+BEGIN
+    GetEmployeeDetails(101, v_last_name, v_salary);
+    DBMS_OUTPUT.PUT_LINE('Nazwisko: ' || NVL(v_last_name, 'Brak danych'));
+    DBMS_OUTPUT.PUT_LINE('Zarobki: ' || NVL(TO_CHAR(v_salary), 'Brak danych'));
+END;
+/
+
+
+ZADANIE5
+
+CREATE OR REPLACE PROCEDURE AddEmployee(
+    p_first_name IN EMPLOYEES.FIRST_NAME%TYPE DEFAULT NULL,
+    p_last_name IN EMPLOYEES.LAST_NAME%TYPE,
+    p_email IN EMPLOYEES.EMAIL%TYPE,
+    p_hire_date IN EMPLOYEES.HIRE_DATE%TYPE DEFAULT SYSDATE,
+    p_job_id IN EMPLOYEES.JOB_ID%TYPE DEFAULT 'SA_REP',
+    p_salary IN EMPLOYEES.SALARY%TYPE DEFAULT 5000
+) AS
+    v_employee_id EMPLOYEES.EMPLOYEE_ID%TYPE;
+BEGIN
+    IF p_salary > 20000 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Wynagrodzenie nie może być większe niż 20000');
+    END IF;
+
+    SELECT EMPLOYEES_SEQ.NEXTVAL INTO v_employee_id FROM DUAL;
+
+    INSERT INTO EMPLOYEES (
+        EMPLOYEE_ID, FIRST_NAME, LAST_NAME, EMAIL, HIRE_DATE, JOB_ID, SALARY
+    ) VALUES (
+        v_employee_id, p_first_name, p_last_name, p_email, p_hire_date, p_job_id, p_salary
+    );
+
+    DBMS_OUTPUT.PUT_LINE('Pracownik został dodany. ID: ' || v_employee_id);
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Wystąpił błąd: ' || SQLERRM);
+END;
+/
+
+
+BEGIN
+    AddEmployee(
+        p_first_name => 'John',
+        p_last_name => 'Doe',
+        p_email => 'jdoe@example.com',
+        p_salary => 15000
+    );
+
+    AddEmployee(
+        p_first_name => 'Jane',
+        p_last_name => 'Smith',
+        p_email => 'jsmith@example.com',
+        p_salary => 25000 -- Spowoduje wyjątek
+    );
+END;
+/
+
+
+ZADANIE6
+
+
+CREATE OR REPLACE PROCEDURE GetAverageSalaryByManager(
+    p_manager_id IN EMPLOYEES.MANAGER_ID%TYPE,
+    p_avg_salary OUT NUMBER
+) AS
+BEGIN
+    SELECT AVG(SALARY)
+    INTO p_avg_salary
+    FROM EMPLOYEES
+    WHERE MANAGER_ID = p_manager_id;
+
+    IF p_avg_salary IS NULL THEN
+        p_avg_salary := 0;
+    END IF;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        p_avg_salary := 0;
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Wystąpił błąd: ' || SQLERRM);
+END;
+/
+
+
+DECLARE
+    v_avg_salary NUMBER;
+BEGIN
+    GetAverageSalaryByManager(101, v_avg_salary);
+    DBMS_OUTPUT.PUT_LINE('Średnia zarobków: ' || v_avg_salary);
+
+    GetAverageSalaryByManager(9999, v_avg_salary); 
+    DBMS_OUTPUT.PUT_LINE('Średnia zarobków: ' || v_avg_salary);
+END;
+/
+
+
+ZADANIE7
+
+CREATE OR REPLACE PROCEDURE UpdateSalariesByDepartment(
+    p_department_id IN EMPLOYEES.DEPARTMENT_ID%TYPE,
+    p_increase_percent IN NUMBER
+) AS
+BEGIN
+    UPDATE EMPLOYEES e
+    SET SALARY = (
+        SELECT CASE
+            WHEN e.SALARY * (1 + p_increase_percent / 100) > j.MAX_SALARY THEN j.MAX_SALARY
+            WHEN e.SALARY * (1 + p_increase_percent / 100) < j.MIN_SALARY THEN j.MIN_SALARY
+            ELSE e.SALARY * (1 + p_increase_percent / 100)
+        END
+        FROM JOBS j
+        WHERE e.JOB_ID = j.JOB_ID
+    )
+    WHERE DEPARTMENT_ID = p_department_id;
+
+    IF SQL%ROWCOUNT = 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Brak pracowników w podanym department_id.');
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE = -2291 THEN
+            RAISE_APPLICATION_ERROR(-20002, 'Nieistniejący department_id: naruszono ograniczenie klucza obcego.');
+        ELSE
+            RAISE_APPLICATION_ERROR(-20003, 'Wystąpił błąd: ' || SQLERRM);
+        END IF;
+END;
+/
+
+
+BEGIN
+  
+    UpdateSalariesByDepartment(10, 10);
+    DBMS_OUTPUT.PUT_LINE('Aktualizacja zakończona sukcesem.');
+
+  
+    UpdateSalariesByDepartment(9999, 5);
+END;
+/
+
+ZADANIE8
+
+CREATE OR REPLACE PROCEDURE TransferEmployee(
+    p_employee_id IN EMPLOYEES.EMPLOYEE_ID%TYPE,
+    p_new_department_id IN DEPARTMENTS.DEPARTMENT_ID%TYPE
+) AS
+    v_employee_exists NUMBER;
+    v_department_exists NUMBER;
+BEGIN
+   
+    SELECT COUNT(*)
+    INTO v_employee_exists
+    FROM EMPLOYEES
+    WHERE EMPLOYEE_ID = p_employee_id;
+
+    IF v_employee_exists = 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Pracownik o podanym ID nie istnieje.');
+    END IF;
+
+
+    SELECT COUNT(*)
+    INTO v_department_exists
+    FROM DEPARTMENTS
+    WHERE DEPARTMENT_ID = p_new_department_id;
+
+    IF v_department_exists = 0 THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Podany department_id nie istnieje.');
+    END IF;
+
+
+    UPDATE EMPLOYEES
+    SET DEPARTMENT_ID = p_new_department_id
+    WHERE EMPLOYEE_ID = p_employee_id;
+
+    DBMS_OUTPUT.PUT_LINE('Pracownik został przeniesiony do nowego departamentu.');
+END;
+/
+
+BEGIN
+   
+    TransferEmployee(100, 20);
+    DBMS_OUTPUT.PUT_LINE('Przeniesienie zakończone sukcesem.');
+
+   
+    TransferEmployee(9999, 20);
+
+    
+    TransferEmployee(100, 9999);
+END;
+/
+
+
+ZADANIE9
+
+
+CREATE OR REPLACE PROCEDURE DeleteDepartment(
+    p_department_id IN DEPARTMENTS.DEPARTMENT_ID%TYPE
+) AS
+    v_employee_count NUMBER;
+BEGIN
+   
+    SELECT COUNT(*)
+    INTO v_employee_count
+    FROM EMPLOYEES
+    WHERE DEPARTMENT_ID = p_department_id;
+
+ 
+    IF v_employee_count > 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Nie można usunąć departamentu, ponieważ są w nim przypisani pracownicy.');
+    END IF;
+
+ 
+    DELETE FROM DEPARTMENTS
+    WHERE DEPARTMENT_ID = p_department_id;
+
+    DBMS_OUTPUT.PUT_LINE('Departament został pomyślnie usunięty.');
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Wystąpił błąd: ' || SQLERRM);
+END;
+/
+
+
+BEGIN
+  
+    DeleteDepartment(50);
+    DBMS_OUTPUT.PUT_LINE('Usunięcie zakończone sukcesem.');
+
+ 
+    DeleteDepartment(10);
+
+   
+    DeleteDepartment(9999);
+END;
+/

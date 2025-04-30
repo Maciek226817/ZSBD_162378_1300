@@ -1,0 +1,207 @@
+
+Zadanie1
+CREATE OR REPLACE FUNCTION get_job_title(p_job_id jobs.job_id%TYPE)
+RETURN jobs.job_title%TYPE
+IS
+  v_job_title jobs.job_title%TYPE;
+  job_not_found EXCEPTION;
+BEGIN
+  SELECT job_title INTO v_job_title
+  FROM jobs
+  WHERE job_id = p_job_id;
+
+  RETURN v_job_title;
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    RAISE_APPLICATION_ERROR(-20001, 'No job found with id: ' || p_job_id);
+END;
+/
+
+SELECT get_job_title('AD_PRES') FROM dual;
+
+Zadanie2
+
+CREATE OR REPLACE FUNCTION get_annual_salary(p_emp_id employees.employee_id%TYPE)
+RETURN NUMBER
+IS
+  v_salary        employees.salary%TYPE;
+  v_commission    employees.commission_pct%TYPE;
+  v_annual_salary NUMBER;
+BEGIN
+  SELECT salary, commission_pct
+  INTO v_salary, v_commission
+  FROM employees
+  WHERE employee_id = p_emp_id;
+
+ 
+  IF v_commission IS NULL THEN
+    v_commission := 0;
+  END IF;
+
+  v_annual_salary := (v_salary * 12) + (v_salary * v_commission * 12);
+
+  RETURN v_annual_salary;
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    RAISE_APPLICATION_ERROR(-20002, 'No employee with id: ' || p_emp_id);
+END;
+/
+
+SELECT get_annual_salary(100) FROM dual;
+
+Zadanie3
+
+CREATE OR REPLACE FUNCTION get_area_code(p_phone_number VARCHAR2)
+RETURN VARCHAR2
+IS
+  v_code VARCHAR2(20);
+BEGIN
+ 
+  v_code := REGEXP_SUBSTR(p_phone_number, '\+[0-9]+');
+
+  IF v_code IS NULL THEN
+    RETURN '(brak kodu)';
+  ELSE
+    RETURN '(' || v_code || ')';
+  END IF;
+END;
+/
+
+SELECT get_area_code('+48 123 456 789') FROM dual;
+
+
+Zadanie4
+
+CREATE OR REPLACE FUNCTION format_string(p_input VARCHAR2)
+RETURN VARCHAR2
+IS
+  v_result VARCHAR2(4000);
+  v_len    NUMBER;
+BEGIN
+  v_len := LENGTH(p_input);
+
+  IF v_len = 0 THEN
+    RETURN '';
+  ELSIF v_len = 1 THEN
+    RETURN UPPER(p_input);
+  ELSIF v_len = 2 THEN
+    RETURN UPPER(SUBSTR(p_input, 1, 1)) || UPPER(SUBSTR(p_input, 2, 1));
+  ELSE
+    v_result :=
+      UPPER(SUBSTR(p_input, 1, 1)) ||            
+      LOWER(SUBSTR(p_input, 2, v_len - 2)) ||     
+      UPPER(SUBSTR(p_input, v_len, 1));           
+
+    RETURN v_result;
+  END IF;
+END;
+/
+
+
+SELECT format_string('MIChal') FROM dual;
+
+Zadanie5
+
+CREATE OR REPLACE FUNCTION pesel_to_date(p_pesel VARCHAR2)
+RETURN DATE
+IS
+  v_year  NUMBER;
+  v_month NUMBER;
+  v_day   NUMBER;
+  v_full_year NUMBER;
+BEGIN
+  -- Parsowanie fragmentów
+  v_year := TO_NUMBER(SUBSTR(p_pesel, 1, 2));
+  v_month := TO_NUMBER(SUBSTR(p_pesel, 3, 2));
+  v_day := TO_NUMBER(SUBSTR(p_pesel, 5, 2));
+
+  -- Określenie stulecia
+  IF v_month BETWEEN 1 AND 12 THEN
+    v_full_year := 1900 + v_year;
+  ELSIF v_month BETWEEN 21 AND 32 THEN
+    v_full_year := 2000 + v_year;
+    v_month := v_month - 20;
+  ELSIF v_month BETWEEN 41 AND 52 THEN
+    v_full_year := 2100 + v_year;
+    v_month := v_month - 40;
+  ELSIF v_month BETWEEN 61 AND 72 THEN
+    v_full_year := 2200 + v_year;
+    v_month := v_month - 60;
+  ELSIF v_month BETWEEN 81 AND 92 THEN
+    v_full_year := 1800 + v_year;
+    v_month := v_month - 80;
+  ELSE
+    RAISE_APPLICATION_ERROR(-20003, 'Wrong month in PESEL: ' || v_month);
+  END IF;
+
+ 
+  RETURN TO_DATE(v_full_year || '-' || LPAD(v_month,2,'0') || '-' || LPAD(v_day,2,'0'), 'YYYY-MM-DD');
+END;
+/
+
+
+SELECT pesel_to_date('02270812345') FROM dual;
+
+Zadanie6
+
+CREATE OR REPLACE FUNCTION get_country_stats(p_country_name VARCHAR2)
+RETURN VARCHAR2
+IS
+  v_country_id   countries.country_id%TYPE;
+  v_dept_count   NUMBER;
+  v_emp_count    NUMBER;
+BEGIN
+ 
+  SELECT country_id INTO v_country_id
+  FROM countries
+  WHERE country_name = p_country_name;
+
+  
+  SELECT COUNT(*) INTO v_dept_count
+  FROM departments d
+  JOIN locations l ON d.location_id = l.location_id
+  WHERE l.country_id = v_country_id;
+
+ 
+  SELECT COUNT(*) INTO v_emp_count
+  FROM employees e
+  JOIN departments d ON e.department_id = d.department_id
+  JOIN locations l ON d.location_id = l.location_id
+  WHERE l.country_id = v_country_id;
+
+  RETURN 'Employees: ' || v_emp_count || ', Departments: ' || v_dept_count;
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    RAISE_APPLICATION_ERROR(-20004, 'Country not found: ' || p_country_name);
+END;
+/
+
+
+SELECT get_country_stats('Germany') FROM dual;
+
+Zadanie7
+
+CREATE OR REPLACE FUNCTION generuj_identyfikator (
+    p_nazwisko IN VARCHAR2,
+    p_telefon IN VARCHAR2,
+    p_imie IN VARCHAR2
+) RETURN VARCHAR2 IS
+    v_nazwisko VARCHAR2(3);
+    v_telefon VARCHAR2(4);
+    v_inicial VARCHAR2(1);
+    v_identyfikator VARCHAR2(15);
+BEGIN
+   
+    v_nazwisko := UPPER(SUBSTR(p_nazwisko, 1, 3));
+    v_telefon := SUBSTR(p_telefon, -4);
+    v_inicial := UPPER(SUBSTR(p_imie, 1, 1));
+    v_identyfikator := v_nazwisko || v_telefon || v_inicial;
+    
+    RETURN v_identyfikator;
+END generuj_identyfikator;
+/
+
+SELECT generuj_identyfikator('Chomczyk',123456789,'Michal') FROM dual;

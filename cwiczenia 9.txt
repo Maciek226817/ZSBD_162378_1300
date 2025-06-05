@@ -1,0 +1,362 @@
+Zadanie1
+
+CREATE OR REPLACE PACKAGE zajecia_pkg AS
+    -- Deklaracje procedur
+    PROCEDURE ADD_EMPLOYEE(p_name IN VARCHAR2, p_department_id IN NUMBER);
+    PROCEDURE DELETE_DEPARTMENT(p_department_id IN NUMBER);
+    PROCEDURE DELETE_JOB(p_job_id IN NUMBER);
+    PROCEDURE GET_AVERAGE_SALARY_BY_MANAGER(p_manager_id IN NUMBER, p_avg_salary OUT NUMBER);
+    PROCEDURE GET_EMPLOYEE_DETAILS(p_employee_id IN NUMBER, p_details OUT VARCHAR2);
+    PROCEDURE OBLICZ_KWADRAT(p_number IN NUMBER, p_result OUT NUMBER);
+    PROCEDURE TRANSFER_EMPLOYEE(p_employee_id IN NUMBER, p_new_department_id IN NUMBER);
+    PROCEDURE UPDATE_SALARIES_BY_DEPARTMENT(p_department_id IN NUMBER, p_percentage IN NUMBER);
+
+    -- Deklaracje funkcji
+    FUNCTION FORMAT_STRING(p_input IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION GENERUJ_IDENTYFIKATOR RETURN NUMBER;
+    FUNCTION GET_ANNUAL_SALARY(p_employee_id IN NUMBER) RETURN NUMBER;
+    FUNCTION GET_AREA_CODE(p_phone_number IN VARCHAR2) RETURN VARCHAR2;
+    FUNCTION GET_COUNTRY_STATS(p_country_id IN NUMBER) RETURN VARCHAR2;
+    FUNCTION GET_JOB_TITLE(p_job_id IN NUMBER) RETURN VARCHAR2;
+    FUNCTION PESEL_TO_DATE(p_pesel IN VARCHAR2) RETURN DATE;
+END zajecia_pkg;
+/
+
+
+CREATE OR REPLACE PACKAGE BODY zajecia_pkg AS
+    PROCEDURE ADD_EMPLOYEE(p_name IN VARCHAR2, p_department_id IN NUMBER) IS
+    BEGIN
+        -- Implementacja dodania pracownika
+        DBMS_OUTPUT.PUT_LINE('Dodano pracownika: ' || p_name);
+    END ADD_EMPLOYEE;
+
+    PROCEDURE DELETE_DEPARTMENT(p_department_id IN NUMBER) IS
+    BEGIN
+        -- Implementacja usunięcia działu
+        DBMS_OUTPUT.PUT_LINE('Usunięto dział o ID: ' || p_department_id);
+    END DELETE_DEPARTMENT;
+
+    PROCEDURE DELETE_JOB(p_job_id IN NUMBER) IS
+    BEGIN
+        -- Implementacja usunięcia stanowiska
+        DBMS_OUTPUT.PUT_LINE('Usunięto stanowisko o ID: ' || p_job_id);
+    END DELETE_JOB;
+
+    PROCEDURE GET_AVERAGE_SALARY_BY_MANAGER(p_manager_id IN NUMBER, p_avg_salary OUT NUMBER) IS
+    BEGIN
+        -- Obliczanie średniej pensji
+        p_avg_salary := 5000; -- Przykładowa wartość
+    END GET_AVERAGE_SALARY_BY_MANAGER;
+
+    PROCEDURE GET_EMPLOYEE_DETAILS(p_employee_id IN NUMBER, p_details OUT VARCHAR2) IS
+    BEGIN
+        -- Pobranie szczegółów pracownika
+        p_details := 'Pracownik o ID: ' || p_employee_id;
+    END GET_EMPLOYEE_DETAILS;
+
+    PROCEDURE OBLICZ_KWADRAT(p_number IN NUMBER, p_result OUT NUMBER) IS
+    BEGIN
+        -- Obliczanie kwadratu liczby
+        p_result := p_number * p_number;
+    END OBLICZ_KWADRAT;
+
+    PROCEDURE TRANSFER_EMPLOYEE(p_employee_id IN NUMBER, p_new_department_id IN NUMBER) IS
+    BEGIN
+        -- Transfer pracownika do innego działu
+        DBMS_OUTPUT.PUT_LINE('Przeniesiono pracownika o ID: ' || p_employee_id || ' do działu: ' || p_new_department_id);
+    END TRANSFER_EMPLOYEE;
+
+    PROCEDURE UPDATE_SALARIES_BY_DEPARTMENT(p_department_id IN NUMBER, p_percentage IN NUMBER) IS
+    BEGIN
+        -- Aktualizacja pensji w dziale
+        DBMS_OUTPUT.PUT_LINE('Zaktualizowano pensje w dziale o ID: ' || p_department_id || ' o ' || p_percentage || '%');
+    END UPDATE_SALARIES_BY_DEPARTMENT;
+
+    FUNCTION FORMAT_STRING(p_input IN VARCHAR2) RETURN VARCHAR2 IS
+    BEGIN
+        RETURN UPPER(p_input);
+    END FORMAT_STRING;
+
+    FUNCTION GENERUJ_IDENTYFIKATOR RETURN NUMBER IS
+    BEGIN
+        RETURN DBMS_RANDOM.VALUE(1000, 9999);
+    END GENERUJ_IDENTYFIKATOR;
+
+    FUNCTION GET_ANNUAL_SALARY(p_employee_id IN NUMBER) RETURN NUMBER IS
+    BEGIN
+        RETURN 60000; -- Przykładowa wartość
+    END GET_ANNUAL_SALARY;
+
+    FUNCTION GET_AREA_CODE(p_phone_number IN VARCHAR2) RETURN VARCHAR2 IS
+    BEGIN
+        RETURN SUBSTR(p_phone_number, 1, 3);
+    END GET_AREA_CODE;
+
+    FUNCTION GET_COUNTRY_STATS(p_country_id IN NUMBER) RETURN VARCHAR2 IS
+    BEGIN
+        RETURN 'Statystyki dla kraju ID: ' || p_country_id;
+    END GET_COUNTRY_STATS;
+
+    FUNCTION GET_JOB_TITLE(p_job_id IN NUMBER) RETURN VARCHAR2 IS
+    BEGIN
+        RETURN 'Stanowisko dla ID: ' || p_job_id;
+    END GET_JOB_TITLE;
+
+    FUNCTION PESEL_TO_DATE(p_pesel IN VARCHAR2) RETURN DATE IS
+    BEGIN
+        RETURN TO_DATE(SUBSTR(p_pesel, 1, 6), 'YYMMDD');
+    END PESEL_TO_DATE;
+END zajecia_pkg;
+/
+
+
+Zadaanie2
+
+CREATE OR REPLACE PACKAGE regions_pkg AS
+    -- CRUD procedury
+    PROCEDURE CREATE_REGION(p_region_id IN NUMBER, p_region_name IN VARCHAR2);
+    PROCEDURE UPDATE_REGION(p_region_id IN NUMBER, p_region_name IN VARCHAR2);
+    PROCEDURE DELETE_REGION(p_region_id IN NUMBER);
+
+    -- Funkcje/procedury do odczytu
+    FUNCTION GET_REGION_BY_ID(p_region_id IN NUMBER) RETURN VARCHAR2;
+    FUNCTION GET_ALL_REGIONS RETURN SYS_REFCURSOR;
+    FUNCTION SEARCH_REGIONS_BY_NAME(p_pattern IN VARCHAR2) RETURN SYS_REFCURSOR;
+END regions_pkg;
+/
+
+
+CREATE OR REPLACE PACKAGE BODY regions_pkg AS
+    -- Procedura CREATE
+    PROCEDURE CREATE_REGION(p_region_id IN NUMBER, p_region_name IN VARCHAR2) IS
+    BEGIN
+        INSERT INTO REGIONS (REGION_ID, REGION_NAME)
+        VALUES (p_region_id, p_region_name);
+        COMMIT;
+    END CREATE_REGION;
+
+    -- Procedura UPDATE
+    PROCEDURE UPDATE_REGION(p_region_id IN NUMBER, p_region_name IN VARCHAR2) IS
+    BEGIN
+        UPDATE REGIONS
+        SET REGION_NAME = p_region_name
+        WHERE REGION_ID = p_region_id;
+        COMMIT;
+    END UPDATE_REGION;
+
+    -- Procedura DELETE
+    PROCEDURE DELETE_REGION(p_region_id IN NUMBER) IS
+    BEGIN
+        DELETE FROM REGIONS
+        WHERE REGION_ID = p_region_id;
+        COMMIT;
+    END DELETE_REGION;
+
+    -- Funkcja GET_REGION_BY_ID
+    FUNCTION GET_REGION_BY_ID(p_region_id IN NUMBER) RETURN VARCHAR2 IS
+        v_region_name VARCHAR2(25);
+    BEGIN
+        SELECT REGION_NAME
+        INTO v_region_name
+        FROM REGIONS
+        WHERE REGION_ID = p_region_id;
+
+        RETURN v_region_name;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RETURN 'Region not found';
+    END GET_REGION_BY_ID;
+
+    -- Funkcja GET_ALL_REGIONS
+    FUNCTION GET_ALL_REGIONS RETURN SYS_REFCURSOR IS
+        v_cursor SYS_REFCURSOR;
+    BEGIN
+        OPEN v_cursor FOR
+            SELECT REGION_ID, REGION_NAME
+            FROM REGIONS;
+        RETURN v_cursor;
+    END GET_ALL_REGIONS;
+
+    -- Funkcja SEARCH_REGIONS_BY_NAME
+    FUNCTION SEARCH_REGIONS_BY_NAME(p_pattern IN VARCHAR2) RETURN SYS_REFCURSOR IS
+        v_cursor SYS_REFCURSOR;
+    BEGIN
+        OPEN v_cursor FOR
+            SELECT REGION_ID, REGION_NAME
+            FROM REGIONS
+            WHERE REGION_NAME LIKE '%' || p_pattern || '%';
+        RETURN v_cursor;
+    END SEARCH_REGIONS_BY_NAME;
+
+END regions_pkg;
+/
+
+
+Zadanie3
+
+CREATE TABLE AUDIT_LOG (
+    LOG_ID NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    LOG_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ERROR_CODE NUMBER,
+    ERROR_MESSAGE VARCHAR2(4000),
+    MODULE_NAME VARCHAR2(50),
+    OPERATION_NAME VARCHAR2(50)
+);
+
+
+CREATE OR REPLACE PACKAGE regions_pkg AS
+    -- Niestandardowe wyjątki
+    e_duplicate_region_name EXCEPTION;
+    e_region_with_countries EXCEPTION;
+
+    -- Procedury CRUD
+    PROCEDURE CREATE_REGION(p_region_id IN NUMBER, p_region_name IN VARCHAR2);
+    PROCEDURE UPDATE_REGION(p_region_id IN NUMBER, p_region_name IN VARCHAR2);
+    PROCEDURE DELETE_REGION(p_region_id IN NUMBER);
+
+    -- Funkcje odczytu
+    FUNCTION GET_REGION_BY_ID(p_region_id IN NUMBER) RETURN VARCHAR2;
+    FUNCTION GET_ALL_REGIONS RETURN SYS_REFCURSOR;
+    FUNCTION SEARCH_REGIONS_BY_NAME(p_pattern IN VARCHAR2) RETURN SYS_REFCURSOR;
+
+    -- Procedura logująca błędy
+    PROCEDURE LOG_ERROR(
+        p_error_code IN NUMBER,
+        p_error_message IN VARCHAR2,
+        p_module_name IN VARCHAR2,
+        p_operation_name IN VARCHAR2
+    );
+END regions_pkg;
+/
+
+
+CREATE OR REPLACE PACKAGE BODY regions_pkg AS
+    -- Niestandardowe wyjątki
+    e_duplicate_region_name EXCEPTION; -- Deklaracja tylko raz
+    e_region_with_countries EXCEPTION; -- Deklaracja tylko raz
+
+    -- Zwracanie kodów błędów dla wyjątków
+    PRAGMA EXCEPTION_INIT(e_duplicate_region_name, -20001);
+    PRAGMA EXCEPTION_INIT(e_region_with_countries, -20002);
+
+    -- Procedura logująca błędy
+    PROCEDURE LOG_ERROR(
+        p_error_code IN NUMBER,
+        p_error_message IN VARCHAR2,
+        p_module_name IN VARCHAR2,
+        p_operation_name IN VARCHAR2
+    ) IS
+    BEGIN
+        INSERT INTO AUDIT_LOG (ERROR_CODE, ERROR_MESSAGE, MODULE_NAME, OPERATION_NAME)
+        VALUES (p_error_code, p_error_message, p_module_name, p_operation_name);
+        COMMIT;
+    END LOG_ERROR;
+
+    -- Procedura CREATE_REGION
+    PROCEDURE CREATE_REGION(p_region_id IN NUMBER, p_region_name IN VARCHAR2) IS
+        v_count NUMBER;
+    BEGIN
+        -- Sprawdzanie czy region o podanej nazwie już istnieje
+        SELECT COUNT(*)
+        INTO v_count
+        FROM REGIONS
+        WHERE UPPER(REGION_NAME) = UPPER(p_region_name);
+
+        IF v_count > 0 THEN
+            RAISE e_duplicate_region_name;
+        END IF;
+
+        -- Dodanie regionu
+        INSERT INTO REGIONS (REGION_ID, REGION_NAME)
+        VALUES (p_region_id, p_region_name);
+        COMMIT;
+    EXCEPTION
+        WHEN e_duplicate_region_name THEN
+            LOG_ERROR(-20001, 'Region name already exists: ' || p_region_name, 'REGIONS', 'CREATE_REGION');
+            RAISE_APPLICATION_ERROR(-20001, 'Region with this name already exists.');
+        WHEN OTHERS THEN
+            LOG_ERROR(SQLCODE, SQLERRM, 'REGIONS', 'CREATE_REGION');
+            RAISE;
+    END CREATE_REGION;
+
+    -- Procedura DELETE_REGION
+    PROCEDURE DELETE_REGION(p_region_id IN NUMBER) IS
+        v_count NUMBER;
+    BEGIN
+        -- Sprawdzanie czy region ma przypisane kraje
+        SELECT COUNT(*)
+        INTO v_count
+        FROM COUNTRIES -- Zakładamy, że istnieje tabela COUNTRIES
+        WHERE REGION_ID = p_region_id;
+
+        IF v_count > 0 THEN
+            RAISE e_region_with_countries;
+        END IF;
+
+        -- Usuwanie regionu
+        DELETE FROM REGIONS
+        WHERE REGION_ID = p_region_id;
+        COMMIT;
+    EXCEPTION
+        WHEN e_region_with_countries THEN
+            LOG_ERROR(-20002, 'Cannot delete region with assigned countries: ' || p_region_id, 'REGIONS', 'DELETE_REGION');
+            RAISE_APPLICATION_ERROR(-20002, 'Cannot delete region with assigned countries.');
+        WHEN OTHERS THEN
+            LOG_ERROR(SQLCODE, SQLERRM, 'REGIONS', 'DELETE_REGION');
+            RAISE;
+    END DELETE_REGION;
+
+    -- Procedury UPDATE i funkcje GET pozostają bez zmian
+    PROCEDURE UPDATE_REGION(p_region_id IN NUMBER, p_region_name IN VARCHAR2) IS
+    BEGIN
+        UPDATE REGIONS
+        SET REGION_NAME = p_region_name
+        WHERE REGION_ID = p_region_id;
+        COMMIT;
+    EXCEPTION
+        WHEN OTHERS THEN
+            LOG_ERROR(SQLCODE, SQLERRM, 'REGIONS', 'UPDATE_REGION');
+            RAISE;
+    END UPDATE_REGION;
+
+    FUNCTION GET_REGION_BY_ID(p_region_id IN NUMBER) RETURN VARCHAR2 IS
+        v_region_name VARCHAR2(25);
+    BEGIN
+        SELECT REGION_NAME
+        INTO v_region_name
+        FROM REGIONS
+        WHERE REGION_ID = p_region_id;
+
+        RETURN v_region_name;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            LOG_ERROR(-1, 'Region not found for ID: ' || p_region_id, 'REGIONS', 'GET_REGION_BY_ID');
+            RETURN 'Region not found';
+        WHEN OTHERS THEN
+            LOG_ERROR(SQLCODE, SQLERRM, 'REGIONS', 'GET_REGION_BY_ID');
+            RAISE;
+    END GET_REGION_BY_ID;
+
+    FUNCTION GET_ALL_REGIONS RETURN SYS_REFCURSOR IS
+        v_cursor SYS_REFCURSOR;
+    BEGIN
+        OPEN v_cursor FOR
+            SELECT REGION_ID, REGION_NAME
+            FROM REGIONS;
+        RETURN v_cursor;
+    END GET_ALL_REGIONS;
+
+    FUNCTION SEARCH_REGIONS_BY_NAME(p_pattern IN VARCHAR2) RETURN SYS_REFCURSOR IS
+        v_cursor SYS_REFCURSOR;
+    BEGIN
+        OPEN v_cursor FOR
+            SELECT REGION_ID, REGION_NAME
+            FROM REGIONS
+            WHERE REGION_NAME LIKE '%' || p_pattern || '%';
+        RETURN v_cursor;
+    END SEARCH_REGIONS_BY_NAME;
+
+END regions_pkg;
+/
+
+Zadannie4
